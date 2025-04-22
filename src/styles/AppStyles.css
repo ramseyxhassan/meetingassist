@@ -1,0 +1,127 @@
+/* Global styles */
+body, html {
+    margin: 0 !important;
+    padding: 0 !important;
+    height: 100% !important;
+    background-color: #121212 !important;
+    color: #e0e0e0 !important;
+    font-family: 'Inter', Avenir, Helvetica, Arial, sans-serif !important;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow: hidden !important;
+}
+
+#app {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100vh !important;
+    overflow: hidden !important;
+}
+
+.compact-menu {
+    height: 40px !important;
+    line-height: 40px !important;
+    border-bottom: 1px solid #2c2c2c !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.compact-menu .el-menu-item {
+    height: 40px !important;
+    line-height: 40px !important;
+    font-size: 14px !important;
+    padding: 0 15px !important;
+}
+
+.router-view {
+    flex-grow: 1 !important;
+    overflow-y: auto !important;
+    background-color: #1e1e1e !important;
+    height: calc(100vh - 41px) !important; /* 40px menu + 1px border */
+}
+
+/* Scrollbar Styles */
+::-webkit-scrollbar {
+    width: 6px !important;
+    height: 6px !important;
+}
+
+::-webkit-scrollbar-track {
+    background-color: #1e1e1e !important;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #4c4c4c !important;
+    border-radius: 3px !important;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: #555555 !important;
+}
+
+/* Dark theme for Element UI components */
+.el-button {
+    background-color: #2c2c2c !important;
+    border-color: #3e3e3e !important;
+    color: #ffffff !important;
+}
+
+.el-button:hover,
+.el-button:focus {
+    background-color: #3a3a3a !important;
+    border-color: #4a4a4a !important;
+    color: #ffffff !important;
+}
+
+.el-input__inner,
+.el-textarea__inner {
+    background-color: #2c2c2c !important;
+    border-color: #3e3e3e !important;
+    color: #ffffff !important;
+}
+
+.el-select-dropdown {
+    background-color: #2c2c2c !important;
+    border-color: #3e3e3e !important;
+}
+
+.el-select-dropdown__item {
+    color: #ffffff !important;
+}
+
+.el-select-dropdown__item.selected,
+.el-select-dropdown__item.hover,
+.el-select-dropdown__item:hover {
+    background-color: #3a3a3a !important;
+}
+
+.el-dialog,
+.el-message-box {
+    background-color: #2c2c2c !important;
+    border-color: #3e3e3e !important;
+}
+
+.el-dialog__title,
+.el-message-box__title {
+    color: #ffffff !important;
+}
+
+.el-dialog__body,
+.el-message-box__content {
+    color: #e0e0e0 !important;
+}
+
+/* Ensure menu doesn't overflow */
+.el-menu--horizontal>.el-menu-item {
+    float: left !important;
+    height: 40px !important;
+    line-height: 40px !important;
+    margin: 0 !important;
+    border-bottom: 2px solid transparent !important;
+    color: #ffffff !important;
+}
+
+.el-menu--horizontal>.el-menu-item.is-active {
+    border-bottom: 2px solid #409eff !important;
+    color: #409eff !important;
+}

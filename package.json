@@ -1,0 +1,46 @@
+{
+  "name": "front",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.27.1",
+    "@aws-sdk/client-transcribe-streaming": "^3.637.0",
+    "assert-js": "^1.0.0",
+    "axios": "^1.6.2",
+    "compromise": "^14.14.0",
+    "core-js": "^3.8.3",
+    "cors": "^2.8.5",
+    "crypto-js": "^4.2.0",
+    "element-ui": "^2.15.14",
+    "express": "^4.19.2",
+    "firebase": "^10.13.1",
+    "lodash-es": "^4.17.21",
+    "markdown-it": "^13.0.2",
+    "marked": "^10.0.0",
+    "md5-hex": "^5.0.0",
+    "microsoft-cognitiveservices-speech-sdk": "^1.33.1",
+    "moment": "^2.29.4",
+    "mongodb": "^6.3.0",
+    "openai": "^4.57.0",
+    "raw-loader": "^4.0.2",
+    "socket.io": "^4.7.5",
+    "socket.io-client": "^4.7.5",
+    "universal-cookie": "^6.1.1",
+    "vue": "^2.6.14",
+    "vue-router": "^3.5.1",
+    "vue-virtual-scroller": "^1.1.2",
+    "vuex": "^3.6.2",
+    "web-streams-polyfill": "^4.0.0"
+  },
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "~5.0.0",
+    "@vue/cli-plugin-router": "~5.0.0",
+    "@vue/cli-plugin-vuex": "~5.0.0",
+    "@vue/cli-service": "~5.0.0",
+    "vue-template-compiler": "^2.6.14"
+  }
+}

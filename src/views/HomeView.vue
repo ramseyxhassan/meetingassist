@@ -65,7 +65,16 @@
         <LoadingIcon v-show="show_ai_thinking_effect" />
         <div class="single-part-bottom-bar">
           <el-select v-model="selectedAiModel" placeholder="Select AI Model" @change="onAiModelChange" style="margin-right: 10px;">
-            <!-- ... options ... -->
+            <el-option-group label="OpenAI">
+              <el-option label="GPT-4o (OpenAI)" value="gpt-4o" />
+            </el-option-group>
+            <el-option-group label="Anthropic">
+              <el-option label="Claude Sonnet 4 (Anthropic)" value="claude-3-5-sonnet-20241022" />
+            </el-option-group>
+            <el-option-group label="Gemini">
+              <el-option label="Gemini 2.5 Pro" value="gemini-2.5-pro" />
+              <el-option label="Gemini 2.5 Flash" value="gemini-2.5-flash" />
+            </el-option-group>
           </el-select>
           <el-button
               icon="el-icon-thumb"
@@ -482,45 +491,16 @@ export default {
       if (speakerId !== "Unidentified" && !isPartial) {
         console.log('Processing for speakerSegments');
 
-        // Create a new segment for each complete sentence
-        const newSegment = { speakerId, speakerLabel, text: text.trim() };
-        console.log('New segment created:', newSegment);
+        const newText = text.trim();
+        const lastSegment = this.speakerSegments[this.speakerSegments.length - 1];
 
-        // Process the completed segment (this might trigger streaming if enabled)
-        this.processCompletedSegment(newSegment);
-
-        // Check if the last segment is from the same speaker and incomplete
-        if (this.speakerSegments.length > 0) {
-          const lastSegment = this.speakerSegments[this.speakerSegments.length - 1];
-          console.log('Last segment:', lastSegment);
-
-          if (lastSegment.speakerId === speakerId && !this.isCompleteSentence(lastSegment.text)) {
-            console.log('Appending to last segment');
-            // Append to the last segment if it's incomplete
-            lastSegment.text += " " + newSegment.text;
-            if (this.isCompleteSentence(lastSegment.text)) {
-              console.log('Last segment is now complete');
-              // If it's now complete, create a new segment for any remaining text
-              const remainingText = this.getRemainingSentence(lastSegment.text);
-              if (remainingText) {
-                console.log('Adding remaining text as new segment');
-                this.speakerSegments.push({ speakerId, speakerLabel, text: remainingText });
-              }
-            }
-          } else {
-            console.log('Adding as new segment');
-            // Add as a new segment
-            this.speakerSegments.push(newSegment);
-          }
+        // Avoid duplicates: only push if different from last
+        if (!lastSegment || lastSegment.speakerId !== speakerId || lastSegment.text !== newText) {
+          const newSegment = { speakerId, speakerLabel, text: newText };
+          this.processCompletedSegment(newSegment);
         } else {
-          console.log('First segment, adding it');
-          // If it's the first segment, just add it
-          this.speakerSegments.push(newSegment);
+          console.log('Duplicate segment detected, not adding.');
         }
-
-        // Clean up empty segments
-        this.speakerSegments = this.speakerSegments.filter(segment => segment.text.trim().length > 0);
-        console.log('Current speakerSegments:', this.speakerSegments);
       }
 
       this.saveState();
@@ -529,6 +509,15 @@ export default {
 
     async processCompletedSegment(segment) {
       console.log('Processing completed segment:', segment);
+
+      // Avoid duplicates: only push if different from last
+      const lastSegment = this.speakerSegments[this.speakerSegments.length - 1];
+      if (!lastSegment || lastSegment.speakerId !== segment.speakerId || lastSegment.text !== segment.text) {
+        this.speakerSegments.push(segment);
+        console.log('Segment added to speakerSegments');
+      } else {
+        console.log('Duplicate segment detected in processCompletedSegment, not adding.');
+      }
 
       if (this.streamingEnabled && this.isCompleteSentence(segment.text) && this.isQuestionOrInterviewPhrase(segment.text)) {
         console.log('Streaming enabled and segment is a question/interview phrase');
@@ -546,12 +535,6 @@ export default {
         } catch (e) {
           console.error("Error getting streaming AI answer:", e);
         }
-      }
-
-      // Make sure to add the segment to speakerSegments here if it's not already being done
-      if (!this.speakerSegments.includes(segment)) {
-        this.speakerSegments.push(segment);
-        console.log('Segment added to speakerSegments');
       }
     },
 
@@ -586,57 +569,119 @@ export default {
 
     // AI Interaction Methods
     async askAI(content, isFollowUp = false) {
-      const apiKey = this.selectedAiModel.startsWith('gpt') || this.selectedAiModel.startsWith('o1')
-          ? localStorage.getItem("openai_api_key")
-          : localStorage.getItem("anthropic_api_key");
+      let apiKey = '';
+      let provider = '';
+      if (this.selectedAiModel.startsWith('gpt') || this.selectedAiModel.startsWith('o1')) {
+        provider = 'openai';
+        apiKey = localStorage.getItem("openai_api_key");
+      } else if (this.selectedAiModel.startsWith('claude')) {
+        provider = 'anthropic';
+        apiKey = localStorage.getItem("anthropic_api_key");
+      } else if (this.selectedAiModel.startsWith('gemini')) {
+        provider = 'gemini';
+        apiKey = localStorage.getItem("gemini_api_key");
+      }
 
       if (!apiKey) {
-        throw new Error(`Please set up an ${this.selectedAiModel.startsWith('gpt') || this.selectedAiModel.startsWith('o1') ? 'OpenAI' : 'Anthropic'} API Key in settings!`);
+        throw new Error(`Please set up an ${provider.charAt(0).toUpperCase() + provider.slice(1)} API Key in settings!`);
       }
 
       const systemPrompt = localStorage.getItem("system_prompt") || "";
 
       let messages = [];
-      if (systemPrompt) {
-        messages.push({ role: "system", content: systemPrompt });
+      if (provider === 'anthropic') {
+        // Anthropic uses a different message format
+        if (systemPrompt) {
+          messages.push({ role: "system", content: systemPrompt });
+        }
+        messages.push({ role: "user", content: content });
+      } else {
+        // OpenAI and Gemini use standard format
+        if (systemPrompt) {
+          messages.push({ role: "system", content: systemPrompt });
+        }
+        messages.push({ role: "user", content: content });
       }
-      messages.push({ role: "user", content: content });
 
       let response;
       try {
-        if (this.selectedAiModel.startsWith('gpt') || this.selectedAiModel.startsWith('o1')) {
-          const openai = new OpenAI({ apiKey: apiKey, dangerouslyAllowBrowser: true });
-
-          // Determine the correct parameter based on the model
-          const parameter = this.selectedAiModel === 'o1-preview' ? 'max_completion_tokens' : 'max_tokens';
-
-          response = await openai.chat.completions.create({
+        if (provider === 'openai') {
+          const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
+          const result = await openai.chat.completions.create({
             model: this.selectedAiModel,
-            messages: messages,
-            [parameter]: this.maxTokens,
-          });
-
-          response = response.choices[0]?.message?.content || "";
-        } else {
-          const anthropic = new Anthropic({ apiKey: apiKey, dangerouslyAllowBrowser: true });
-          response = await anthropic.messages.create({
-            model: this.selectedAiModel,
+            messages,
             max_tokens: this.maxTokens,
-            messages: messages,
+            temperature: 0.7,
           });
-          response = response.content[0].text;
+          response = result.choices[0].message.content;
+        } else if (provider === 'anthropic') {
+          const anthropic = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
+          console.log('Anthropic request:', { model: this.selectedAiModel, messages, max_tokens: this.maxTokens });
+          
+          const result = await anthropic.messages.create({
+            model: this.selectedAiModel,
+            messages,
+            max_tokens: this.maxTokens,
+            temperature: 0.7,
+          });
+          
+          console.log('Anthropic response:', result);
+          
+          // Handle the response structure properly
+          if (result.content && result.content.length > 0 && result.content[0].text) {
+            response = result.content[0].text;
+          } else if (result.content && result.content.length > 0 && result.content[0].type === 'text') {
+            response = result.content[0].text;
+          } else {
+            console.error('Unexpected Anthropic response structure:', result);
+            throw new Error('Invalid response structure from Anthropic API');
+          }
+        } else if (provider === 'gemini') {
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.selectedAiModel}:generateContent?key=${apiKey}`;
+          // Build full conversation history for Gemini
+          const geminiMessages = [];
+          if (systemPrompt) {
+            geminiMessages.push({ role: 'user', parts: [{ text: systemPrompt }] });
+          }
+          for (const msg of this.conversationHistory) {
+            if (msg.role === 'assistant') {
+              geminiMessages.push({ role: 'model', parts: [{ text: msg.content }] });
+            } else {
+              geminiMessages.push({ role: 'user', parts: [{ text: msg.content }] });
+            }
+          }
+          geminiMessages.push({ role: 'user', parts: [{ text: content }] });
+          const payload = {
+            contents: geminiMessages,
+            generationConfig: {
+              maxOutputTokens: this.maxTokens,
+              temperature: 0.7
+            }
+          };
+          const result = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+          });
+          const data = await result.json();
+          if (data.candidates && data.candidates.length > 0) {
+            response = data.candidates[0].content.parts.map(p => p.text).join(' ');
+          } else if (data.promptFeedback && data.promptFeedback.blockReason) {
+            throw new Error('Gemini: ' + data.promptFeedback.blockReason);
+          } else {
+            throw new Error('Gemini returned no response.');
+          }
         }
       } catch (error) {
-        if (error.message.includes("maximum context length") || error.message.includes("token limit")) {
+        if (error.message.includes('token limit')) {
           console.log("Token limit reached. Starting a new conversation.");
           this.conversationHistory = [];
           return this.askAI(content, isFollowUp); // Retry with a fresh conversation
         }
         throw error;
       }
-
-      this.conversationHistory.push({ role: "assistant", content: response });
-      this.saveState();
       return response;
     },
 

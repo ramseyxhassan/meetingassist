@@ -4,27 +4,36 @@
     <div class="desc_text">Choose your AI model and configure related settings:</div>
 
     <div class="separator">
-      <el-select v-model="ai_model" placeholder="Select AI Model" @change="onModelChange">
-        <el-option-group label="OpenAI">
-          <el-option label="GPT-4o" value="gpt-4o"></el-option>
-          <el-option label="o1-preview" value="o1-preview"></el-option>
-          <el-option label="o1-mini" value="o1-mini"></el-option>
-        </el-option-group>
-        <el-option-group label="Anthropic">
-          <el-option label="Claude 3.5 Sonnet" value="claude-3-5-sonnet-20240620"></el-option>
-        </el-option-group>
-      </el-select>
+      <el-input
+        placeholder="sk-... (OpenAI API Key)"
+        v-model="openai_api_key"
+        @change="onKeyChange('openai_api_key')"
+        type="password"
+        show-password
+      >
+        <template slot="prepend">OpenAI API Key:</template>
+      </el-input>
     </div>
-
     <div class="separator">
       <el-input
-          :placeholder="apiKeyPlaceholder"
-          v-model="currentApiKey"
-          @change="onApiKeyChange"
-          type="password"
-          show-password
+        placeholder="sk-ant-... (Anthropic API Key)"
+        v-model="anthropic_api_key"
+        @change="onKeyChange('anthropic_api_key')"
+        type="password"
+        show-password
       >
-        <template slot="prepend">{{ apiKeyLabel }}:</template>
+        <template slot="prepend">Anthropic API Key:</template>
+      </el-input>
+    </div>
+    <div class="separator">
+      <el-input
+        placeholder="AIza... (Gemini API Key)"
+        v-model="gemini_api_key"
+        @change="onKeyChange('gemini_api_key')"
+        type="password"
+        show-password
+      >
+        <template slot="prepend">Gemini API Key:</template>
       </el-input>
     </div>
 
@@ -58,43 +67,16 @@ export default {
       ai_model: localStorage.getItem("ai_model") || "",
       openai_api_key: localStorage.getItem("openai_api_key") || "",
       anthropic_api_key: localStorage.getItem("anthropic_api_key") || "",
+      gemini_api_key: localStorage.getItem("gemini_api_key") || "",
       system_prompt: localStorage.getItem("system_prompt") || "",
       azure_token: localStorage.getItem("azure_token") || "",
       azure_region: localStorage.getItem("azure_region") || "",
       azure_language: localStorage.getItem("azure_language") || "",
     }
   },
-  computed: {
-    currentApiKey: {
-      get() {
-        return this.isOpenAIModel ? this.openai_api_key : this.anthropic_api_key;
-      },
-      set(value) {
-        if (this.isOpenAIModel) {
-          this.openai_api_key = value;
-        } else {
-          this.anthropic_api_key = value;
-        }
-      }
-    },
-    isOpenAIModel() {
-      return this.ai_model.startsWith('gpt') || this.ai_model.startsWith('o1');
-    },
-    apiKeyLabel() {
-      return this.isOpenAIModel ? 'OpenAI API Key' : 'Anthropic API Key';
-    },
-    apiKeyPlaceholder() {
-      return this.isOpenAIModel ? 'sk-...' : 'sk-ant-...';
-    }
-  },
+
   methods: {
-    onModelChange() {
-      this.onKeyChange('ai_model');
-      this.currentApiKey = this.currentApiKey;
-    },
-    onApiKeyChange() {
-      this.isOpenAIModel ? this.onKeyChange('openai_api_key') : this.onKeyChange('anthropic_api_key');
-    },
+
     toDef() {
       localStorage.clear();
       this.resetData();
@@ -116,6 +98,7 @@ export default {
       this.ai_model = "";
       this.openai_api_key = "";
       this.anthropic_api_key = "";
+      this.gemini_api_key = "";
       this.system_prompt = "";
       this.azure_token = "";
       this.azure_region = "";
@@ -124,6 +107,7 @@ export default {
       localStorage.removeItem("ai_model");
       localStorage.removeItem("openai_api_key");
       localStorage.removeItem("anthropic_api_key");
+      localStorage.removeItem("gemini_api_key");
       localStorage.removeItem("system_prompt");
       localStorage.removeItem("azure_token");
       localStorage.removeItem("azure_region");
